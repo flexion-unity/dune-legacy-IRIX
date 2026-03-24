@@ -226,10 +226,10 @@ void Fntfile::readfile(unsigned char* pFiledata, Uint16 filesize) {
 		exit(EXIT_FAILURE);
 	}
 
-	Uint16* chars = (Uint16*) (pFiledata + SDL_SwapLE16(((Uint16*) pFiledata)[3]));
+	unsigned char* chars = pFiledata + SDL_SwapLE16(((Uint16*) pFiledata)[3]);
 	Uint8* widths = pFiledata + SDL_SwapLE16(((Uint16*) pFiledata)[4]);
 	//unsigned char* graphics = pFiledata + SDL_SwapLE16(((Uint16*) pFiledata)[5]);
-	Uint16* heights = (Uint16*) (pFiledata + SDL_SwapLE16(((Uint16*) pFiledata)[6]));
+	unsigned char* heights = pFiledata + SDL_SwapLE16(((Uint16*) pFiledata)[6]);
 
 	// pFiledata[16] might be the first character index and pFiledata[17] the last index,
 	// but I don't know for sure.
@@ -238,9 +238,9 @@ void Fntfile::readfile(unsigned char* pFiledata, Uint16 filesize) {
 	maxCharacterWidth = pFiledata[19];
 
 	// Check if every array is in the file
-	if(	( (unsigned char*) (chars+numCharacters) > (pFiledata+filesize))
+	if(	( chars + numCharacters*2 > (pFiledata+filesize))
 		|| ( (unsigned char*) (widths+numCharacters) > (pFiledata+filesize))
-		|| ( (unsigned char*) (heights+numCharacters) > (pFiledata+filesize))) {
+		|| ( heights + numCharacters*2 > (pFiledata+filesize))) {
 		fprintf(stderr,"Fntfile::readfile(): Invalid fnt-File. File too small and cannot contain all characters!\n");
 		exit(EXIT_FAILURE);
 	}
@@ -258,9 +258,12 @@ void Fntfile::readfile(unsigned char* pFiledata, Uint16 filesize) {
 			exit(EXIT_FAILURE);
 		}
 
-		unsigned char* chardata = pFiledata+SDL_SwapLE16(chars[i]);
-		int charHeight = (SDL_SwapLE16(heights[i])) >> 8;
-		int yPos = (SDL_SwapLE16(heights[i])) & 0x00FF;
+		Uint16 chars_i, heights_i;
+		memcpy(&chars_i, chars + i*2, 2); memcpy(&heights_i, heights + i*2, 2);
+		unsigned char* chardata = pFiledata + SDL_SwapLE16(chars_i);
+		Uint16 h = SDL_SwapLE16(heights_i);
+		int charHeight = h >> 8;
+		int yPos = h & 0x00FF;
 
 		if(chardata + charHeight*((character[i].width+1)/2) > (pFiledata+filesize)) {
 			fprintf(stderr,"Fntfile::readfile(): Invalid character graphic. The graphic goes beyond end of file!\n");

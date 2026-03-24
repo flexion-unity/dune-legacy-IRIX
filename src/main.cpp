@@ -464,7 +464,7 @@ int main(int argc, char *argv[]) {
 		settings.general.playerName = myINIFile.getStringValue("General","Player Name","Player");
 		settings.video.width = myINIFile.getIntValue("Video","Width",640);
 		settings.video.height = myINIFile.getIntValue("Video","Height",480);
-		settings.video.fullscreen = myINIFile.getBoolValue("Video","Fullscreen",true);
+		settings.video.fullscreen = myINIFile.getBoolValue("Video","Fullscreen",false);
 		settings.video.doubleBuffering = myINIFile.getBoolValue("Video","Double Buffering",true);
 		settings.video.frameLimit = myINIFile.getBoolValue("Video","FrameLimit",true);
 		settings.video.preferredZoomLevel = myINIFile.getIntValue("Video","Preferred Zoom Level", 0);

@@ -146,27 +146,42 @@ std::string strprintf(const std::string& fmt, ...)
 	va_start(arg_ptr, fmt);
 
 	int length = vsnprintf(NULL, 0, fmt.c_str(), arg_ptr);
-	if(length < 0) {
-        throw std::runtime_error("strprintf(): vsnprintf() failed!");
-	}
-
-	char* tmpBuffer = new char[length+1];
-
 	va_end(arg_ptr);
 
-    va_start(arg_ptr, fmt);
-	if(vsnprintf(tmpBuffer, length+1, fmt.c_str(), arg_ptr) < 0) {
-	    delete [] tmpBuffer;
-        throw std::runtime_error("strprintf(): vsnprintf() failed!");
+	if(length >= 0) {
+		// POSIX-compliant vsnprintf: we know the exact length needed
+		char* tmpBuffer = new char[length+1];
+		va_start(arg_ptr, fmt);
+		if(vsnprintf(tmpBuffer, length+1, fmt.c_str(), arg_ptr) < 0) {
+			delete [] tmpBuffer;
+			va_end(arg_ptr);
+			throw std::runtime_error("strprintf(): vsnprintf() failed!");
+		}
+		va_end(arg_ptr);
+		std::string formatedString(tmpBuffer);
+		delete [] tmpBuffer;
+		return formatedString;
 	}
 
-	std::string formatedString(tmpBuffer);
-
-	delete [] tmpBuffer;
-
-	va_end(arg_ptr);
-
-	return formatedString;
+	// Fallback for IRIX and other platforms where vsnprintf(NULL,0,...) returns -1:
+	// grow the buffer until it fits.
+	size_t bufsize = 256;
+	for(;;) {
+		char* tmpBuffer = new char[bufsize];
+		va_start(arg_ptr, fmt);
+		int ret = vsnprintf(tmpBuffer, bufsize, fmt.c_str(), arg_ptr);
+		va_end(arg_ptr);
+		if(ret >= 0 && (size_t)ret < bufsize) {
+			std::string formatedString(tmpBuffer);
+			delete [] tmpBuffer;
+			return formatedString;
+		}
+		delete [] tmpBuffer;
+		if(bufsize > 1024*1024) {
+			throw std::runtime_error("strprintf(): vsnprintf() failed!");
+		}
+		bufsize *= 2;
+	}
 }
 
 std::string convertCP850ToISO8859_1(const std::string& text)

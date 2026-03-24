@@ -79,7 +79,8 @@ MentatTextFile::MentatTextFile(SDL_RWops* rwop) {
 	while(pCurrentPos < pMentNameSectionEnd) {
 		unsigned int entryLength = *pCurrentPos;
 
-		Uint32 entryContentOffset = SDL_SwapBE32(*((Uint32*) (pCurrentPos+1)));
+		Uint32 entryContentOffset_raw; memcpy(&entryContentOffset_raw, pCurrentPos+1, 4);
+		Uint32 entryContentOffset = SDL_SwapBE32(entryContentOffset_raw);
 
 		unsigned int numMenuEntry = *((char*) pCurrentPos + 5) - '0';
 		unsigned int menuLevel = *((char*) pCurrentPos + 6) - '0';

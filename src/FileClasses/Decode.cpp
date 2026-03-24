@@ -76,7 +76,7 @@ int decode40(unsigned char *image_in, unsigned char *image_out)
 		} else {
 			//bit 7 = 1
 			if(!(count = code & 0x7f)) {
-				count =  SDL_SwapLE16(*((Uint16*)readp));
+				{ Uint16 tmp16; memcpy(&tmp16, readp, 2); count = SDL_SwapLE16(tmp16); }
 				readp += 2;
 				code = count >> 8;
 				if(~code & 0x80) {
@@ -172,8 +172,10 @@ int decode80(unsigned char *image_in, unsigned char *image_out, unsigned checksu
 			//
 			// 11111111 c c p p (5)
 			//
-			unsigned short count = SDL_SwapLE16(*((unsigned short *) (readp + 1)));
-			unsigned short pos = SDL_SwapLE16(*((unsigned short *) (readp + 3)));
+			unsigned short count_raw, pos_raw;
+			memcpy(&count_raw, readp + 1, 2); memcpy(&pos_raw, readp + 3, 2);
+			unsigned short count = SDL_SwapLE16(count_raw);
+			unsigned short pos = SDL_SwapLE16(pos_raw);
 			readp += 5;
 			megacounte += count;
 			memcpy_overlap(writep, image_out + pos, count);
@@ -183,7 +185,8 @@ int decode80(unsigned char *image_in, unsigned char *image_out, unsigned checksu
 			//
 			// 11111110 c c v(4)
 			//
-			unsigned short count = SDL_SwapLE16(*((unsigned short *) (readp + 1)));
+			unsigned short count_raw; memcpy(&count_raw, readp + 1, 2);
+			unsigned short count = SDL_SwapLE16(count_raw);
 			unsigned char color = readp[3];
 			readp += 4;
 			memset(writep, color, count);
@@ -195,7 +198,8 @@ int decode80(unsigned char *image_in, unsigned char *image_out, unsigned checksu
 			// 11cccccc p p (3)
 			//
 			unsigned short count = (*readp & 0x3f) + 3;
-			unsigned short pos = SDL_SwapLE16(*((unsigned short *) (readp + 1)));
+			unsigned short pos_raw; memcpy(&pos_raw, readp + 1, 2);
+			unsigned short pos = SDL_SwapLE16(pos_raw);
 			readp += 3;
 			megacountc += count;
 			memcpy_overlap(writep, image_out + pos, count);

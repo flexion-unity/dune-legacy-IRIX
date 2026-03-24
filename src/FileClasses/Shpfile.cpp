@@ -21,6 +21,7 @@
 
 #include <SDL_endian.h>
 #include <stdexcept>
+#include <string.h>
 
 extern Palette palette;
 
@@ -99,7 +100,8 @@ SDL_Surface *Shpfile::getPicture(Uint32 indexOfFile)
 	unsigned char sizeX = Fileheader[3];
 
 	/* size and also checksum */
-	Uint16 size = SDL_SwapLE16(*((Uint16*) (Fileheader + 8)));
+	Uint16 size_raw; memcpy(&size_raw, Fileheader + 8, 2);
+	Uint16 size = SDL_SwapLE16(size_raw);
 
 	if((ImageOut = (unsigned char*) calloc(1,sizeX*sizeY)) == NULL) {
 				return NULL;
@@ -263,7 +265,8 @@ SDL_Surface* Shpfile::getPictureArray(unsigned int tilesX, unsigned int tilesY, 
 			unsigned char type = Fileheader[0];
 
 			/* size and also checksum */
-			Uint16 size = SDL_SwapLE16(*((Uint16*) (Fileheader + 8)));
+			Uint16 size_raw; memcpy(&size_raw, Fileheader + 8, 2);
+			Uint16 size = SDL_SwapLE16(size_raw);
 
 			if((ImageOut = (unsigned char*) calloc(1,sizeX*sizeY)) == NULL) {
 				free(tiles);
@@ -442,7 +445,7 @@ void Shpfile::readIndex()
 			newShpfileEntry.endOffset = ((Uint32) SDL_SwapLE16(((Uint16*) pFiledata)[2])) - 1;
 		} else {
 			/* File has normal 4 byte offsets */
-			newShpfileEntry.startOffset = ((Uint32) SDL_SwapLE32(*((Uint32*) (pFiledata+2)))) + 2;
+			{ Uint32 startOff32; memcpy(&startOff32, pFiledata+2, 4); newShpfileEntry.startOffset = ((Uint32) SDL_SwapLE32(startOff32)) + 2; }
 			newShpfileEntry.endOffset = ((Uint32) SDL_SwapLE16(((Uint16*) pFiledata)[3])) - 1 + 2;
 		}
 
@@ -486,7 +489,7 @@ void Shpfile::readIndex()
 			// now fill Index with start and end-offsets
 			for(int i = 0; i < NumFiles; i++) {
                 ShpfileEntry newShpfileEntry;
-				newShpfileEntry.startOffset = SDL_SwapLE32( ((Uint32*)(pFiledata+2))[i]) + 2;
+				{ Uint32 startOff32; memcpy(&startOff32, pFiledata+2+i*4, 4); newShpfileEntry.startOffset = SDL_SwapLE32(startOff32) + 2; }
 
 				if(shpfileEntries.empty() == false) {
 					shpfileEntries.back().endOffset = newShpfileEntry.startOffset - 1;
